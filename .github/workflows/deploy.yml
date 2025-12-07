@@ -1,0 +1,148 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: ./infra
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: ./infra
+        run: terraform apply -auto-approve
+
+      - name: Get EC2 IP
+        id: ec2ip
+        working-directory: ./infra
+        run: |
+          EC2_IP=$(terraform output -raw instance_public_ip)
+          echo "ip=$EC2_IP" >> $GITHUB_OUTPUT
+          echo "EC2 IP: $EC2_IP"
+
+      - name: Wait for EC2 to be ready
+        run: |
+          echo "Aguardando EC2 ficar pronta..."
+          sleep 60
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build with Gradle
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build -x test
+
+      - name: Rename JAR
+        run: |
+          cd build/libs
+          JAR_FILE=$(ls *.jar | head -n 1)
+          cp "$JAR_FILE" ../../revenda.jar
+          cd ../..
+          ls -lh revenda.jar
+
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ steps.ec2ip.outputs.ip }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "revenda.jar"
+          target: "/opt/revenda/"
+          timeout: 60s
+          command_timeout: 30s
+
+      - name: Deploy application on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ steps.ec2ip.outputs.ip }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 30s
+          script: |
+            # Verificar se Java está instalado
+            if ! command -v java &> /dev/null; then
+              echo "Instalando Java 21..."
+              sudo yum install -y java-21-amazon-corretto-headless
+            fi
+            
+            # Verificar versão do Java
+            java -version
+            
+            # Matar processo anterior se existir
+            echo "Parando aplicação anterior..."
+            pkill -f "revenda.jar" || true
+            sleep 5
+            
+            # Garantir permissões corretas
+            sudo chown ec2-user:ec2-user /opt/revenda/revenda.jar
+            sudo chmod 755 /opt/revenda/revenda.jar
+            
+            # Iniciar nova aplicação
+            echo "Iniciando aplicação..."
+            cd /opt/revenda
+            nohup java -jar revenda.jar > app.log 2>&1 &
+            
+            # Aguardar alguns segundos
+            sleep 10
+            
+            # Verificar se a aplicação está rodando
+            if pgrep -f "revenda.jar" > /dev/null; then
+              echo "Aplicação iniciada com sucesso!"
+              echo "Logs recentes:"
+              tail -n 20 app.log
+            else
+              echo "ERRO: Aplicação não iniciou!"
+              tail -n 50 app.log
+              exit 1
+            fi
+
+      - name: Health Check
+        run: |
+          echo "Aguardando API inicializar..."
+          sleep 30
+          
+          MAX_ATTEMPTS=10
+          ATTEMPT=1
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "Tentativa $ATTEMPT de $MAX_ATTEMPTS..."
+            
+            if curl -f http://${{ steps.ec2ip.outputs.ip }}:8080/actuator/health; then
+              echo "API está saudável!"
+              exit 0
+            fi
+            
+            echo "API ainda não está respondendo, aguardando..."
+            sleep 10
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+          
+          echo "API não respondeu após $MAX_ATTEMPTS tentativas"
+          exit 1

@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  revenda-veiculos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: revenda-veiculos-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - AWS_COGNITO_REGION=us-east-1
+      - AWS_COGNITO_USER_POOL_ID=us-east-1_0JfZ467Tp
+      - AWS_COGNITO_CLIENT_ID=4tu412kfm1dq8mt3ugeag2mhgs
+      - AWS_COGNITO_ISSUER=https://cognito-idp.us-east-1.amazonaws.com/us-east-1_0JfZ467Tp
+      - AWS_COGNITO_JWKS_URL=https://cognito-idp.us-east-1.amazonaws.com/us-east-1_0JfZ467Tp/.well-known/jwks.json
+    networks:
+      - revenda-network
+    restart: unless-stopped
+
+networks:
+  revenda-network:
+    driver: bridge
