@@ -83,9 +83,11 @@ jobs:
           host: ${{ steps.ec2ip.outputs.ip }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
-          timeout: 60s
-          command_timeout: 30s
+          timeout: 90s
+          command_timeout: 60s
           script: |
+            #!/bin/bash
+            
             # Verificar se Java está instalado
             if ! command -v java &> /dev/null; then
               echo "Instalando Java 21..."
@@ -93,34 +95,74 @@ jobs:
             fi
             
             # Verificar versão do Java
+            echo "Java version:"
             java -version
             
             # Matar processo anterior se existir
             echo "Parando aplicação anterior..."
-            pkill -f "revenda.jar" || true
-            sleep 5
+            pkill -9 -f "revenda.jar" 2>/dev/null || true
+            sleep 3
+            
+            # Limpar processos na porta 8080
+            echo "Liberando porta 8080..."
+            sudo lsof -ti:8080 | xargs sudo kill -9 2>/dev/null || true
+            sleep 2
+            
+            # Garantir que o diretório existe
+            sudo mkdir -p /opt/revenda
             
             # Garantir permissões corretas
-            sudo chown ec2-user:ec2-user /opt/revenda/revenda.jar
-            sudo chmod 755 /opt/revenda/revenda.jar
+            sudo chown -R ec2-user:ec2-user /opt/revenda
+            sudo chmod 755 /opt/revenda
+            sudo chmod 644 /opt/revenda/revenda.jar 2>/dev/null || true
             
-            # Iniciar nova aplicação
-            echo "Iniciando aplicação..."
+            # Ir para o diretório
             cd /opt/revenda
+            
+            # Limpar log anterior
+            rm -f app.log
+            touch app.log
+            
+            # Iniciar nova aplicação em background
+            echo "Iniciando aplicação..."
             nohup java -jar revenda.jar > app.log 2>&1 &
             
-            # Aguardar alguns segundos
-            sleep 10
+            # Iniciar nova aplicação em background
+            echo "Iniciando aplicação..."
+            nohup java -jar revenda.jar > app.log 2>&1 &
             
-            # Verificar se a aplicação está rodando
-            if pgrep -f "revenda.jar" > /dev/null; then
-              echo "Aplicação iniciada com sucesso!"
-              echo "Logs recentes:"
-              tail -n 20 app.log
-            else
-              echo "ERRO: Aplicação não iniciou!"
+            # Pegar o PID
+            APP_PID=$!
+            echo "Aplicação iniciada com PID: $APP_PID"
+            
+            # Salvar PID em arquivo
+            echo $APP_PID > /opt/revenda/app.pid
+            
+            # Aguardar inicialização
+            echo "Aguardando 15 segundos para inicialização..."
+            sleep 15
+            
+            # Verificar se o processo ainda está rodando
+            if ps -p $APP_PID > /dev/null 2>&1; then
+              echo "✓ Aplicação está rodando (PID: $APP_PID)"
+              echo ""
+              echo "=== Logs recentes ==="
               tail -n 50 app.log
+            else
+              echo "✗ ERRO: Aplicação parou de rodar!"
+              echo ""
+              echo "=== Logs completos ==="
+              cat app.log
               exit 1
+            fi
+            
+            # Verificar se a porta 8080 está ouvindo
+            echo ""
+            echo "Verificando porta 8080..."
+            if netstat -tuln | grep :8080 > /dev/null 2>&1; then
+              echo "✓ Porta 8080 está aberta"
+            else
+              echo "⚠ Porta 8080 ainda não está aberta (pode estar inicializando)"
             fi
 
       - name: Health Check
