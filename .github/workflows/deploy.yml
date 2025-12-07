@@ -55,18 +55,14 @@ jobs:
           timeout: 90s
           command_timeout: 60s
           script: |
-            # Script simples: nunca falha só por matar processo antigo
+            # Script simples para iniciar a aplicação sem causar falhas no step
             set -x
 
-            echo "=== Verificando Java ==="
+            echo "=== Verificando/instalando Java ==="
             if ! command -v java >/dev/null 2>&1; then
               sudo yum install -y java-21-amazon-corretto-headless || true
             fi
             java -version || true
-
-            echo "=== Parando aplicação anterior (se existir) ==="
-            pkill -f "revenda.jar" >/dev/null 2>&1 || true
-            sleep 2
 
             echo "=== Garantindo diretório /opt/revenda ==="
             sudo mkdir -p /opt/revenda
@@ -74,13 +70,14 @@ jobs:
             cd /opt/revenda
 
             echo "=== Limpando log antigo ==="
-            rm -f app.log
+            rm -f app.log || true
 
             echo "=== Iniciando aplicação ==="
             nohup java -jar revenda.jar > app.log 2>&1 &
             echo "PID iniciado: $!"
 
-            echo "=== Fim do script de deploy (não falhar aqui) ==="
+            echo "=== Concluído (step não falha aqui) ==="
+            exit 0
 
       - name: Health Check
         run: |
