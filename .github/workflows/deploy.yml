@@ -73,11 +73,41 @@ jobs:
             rm -f app.log || true
 
             echo "=== Iniciando aplicação ==="
-            nohup java -jar revenda.jar > app.log 2>&1 &
+            ls -lah /opt/revenda || true
+            if [ ! -f /opt/revenda/revenda.jar ]; then
+              echo "ERRO: /opt/revenda/revenda.jar não encontrado" && exit 1
+            fi
+            nohup java -jar revenda.jar --server.port=8080 > app.log 2>&1 &
             echo "PID iniciado: $!"
 
             echo "=== Concluído (step não falha aqui) ==="
             exit 0
+
+      - name: Check Application Logs
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "=== Aguardando 15 segundos para app iniciar ==="
+            sleep 15
+            
+            echo ""
+            echo "=== Conteúdo de /opt/revenda ==="
+            ls -lah /opt/revenda
+            
+            echo ""
+            echo "=== Processos Java rodando ==="
+            ps aux | grep java || echo "Nenhum processo Java encontrado"
+            
+            echo ""
+            echo "=== Portas abertas ==="
+            ss -tuln | grep :8080 || echo "Porta 8080 não está aberta"
+            
+            echo ""
+            echo "=== Últimas 100 linhas do app.log ==="
+            tail -n 100 /opt/revenda/app.log || echo "Arquivo app.log não existe"
 
       - name: Health Check
         run: |
