@@ -30,7 +30,9 @@ jobs:
       - name: Rename JAR
         run: |
           cd build/libs
-          JAR_FILE=$(ls *.jar | head -n 1)
+          # Pegar o JAR executável (sem -plain no nome)
+          JAR_FILE=$(ls *.jar | grep -v plain | head -n 1)
+          echo "JAR selecionado: $JAR_FILE"
           cp "$JAR_FILE" ../../revenda.jar
           cd ../..
           ls -lh revenda.jar
