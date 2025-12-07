@@ -56,83 +56,70 @@ jobs:
           command_timeout: 60s
           script: |
             #!/bin/bash
+            set -x  # Debug mode
             
-            # Verificar se Java está instalado
+            echo "=== Verificando Java ==="
             if ! command -v java &> /dev/null; then
               echo "Instalando Java 21..."
               sudo yum install -y java-21-amazon-corretto-headless
             fi
-            
-            # Verificar versão do Java
-            echo "Java version:"
             java -version
             
-            # Matar processo anterior se existir
-            echo "Parando aplicação anterior..."
-            pkill -9 -f "revenda.jar" 2>/dev/null || true
+            echo ""
+            echo "=== Parando aplicação anterior ==="
+            pkill -9 -f "revenda.jar" || echo "Nenhum processo anterior encontrado"
             sleep 3
             
-            # Limpar processos na porta 8080
-            echo "Liberando porta 8080..."
-            sudo lsof -ti:8080 | xargs sudo kill -9 2>/dev/null || true
+            echo ""
+            echo "=== Liberando porta 8080 ==="
+            sudo lsof -ti:8080 | xargs sudo kill -9 2>/dev/null || echo "Porta já está livre"
             sleep 2
             
-            # Garantir que o diretório existe
+            echo ""
+            echo "=== Configurando diretório ==="
             sudo mkdir -p /opt/revenda
-            
-            # Garantir permissões corretas
             sudo chown -R ec2-user:ec2-user /opt/revenda
-            sudo chmod 755 /opt/revenda
-            sudo chmod 644 /opt/revenda/revenda.jar 2>/dev/null || true
-            
-            # Ir para o diretório
             cd /opt/revenda
+            ls -la
             
-            # Limpar log anterior
+            echo ""
+            echo "=== Limpando logs antigos ==="
             rm -f app.log
-            touch app.log
             
-            # Iniciar nova aplicação em background
-            echo "Iniciando aplicação..."
+            echo ""
+            echo "=== Iniciando aplicação ==="
             nohup java -jar revenda.jar > app.log 2>&1 &
-            
-            # Iniciar nova aplicação em background
-            echo "Iniciando aplicação..."
-            nohup java -jar revenda.jar > app.log 2>&1 &
-            
-            # Pegar o PID
             APP_PID=$!
-            echo "Aplicação iniciada com PID: $APP_PID"
+            echo "PID da aplicação: $APP_PID"
+            echo $APP_PID > app.pid
             
-            # Salvar PID em arquivo
-            echo $APP_PID > /opt/revenda/app.pid
+            echo ""
+            echo "=== Aguardando inicialização (20s) ==="
+            sleep 20
             
-            # Aguardar inicialização
-            echo "Aguardando 15 segundos para inicialização..."
-            sleep 15
-            
-            # Verificar se o processo ainda está rodando
+            echo ""
+            echo "=== Verificando processo ==="
             if ps -p $APP_PID > /dev/null 2>&1; then
-              echo "✓ Aplicação está rodando (PID: $APP_PID)"
-              echo ""
-              echo "=== Logs recentes ==="
-              tail -n 50 app.log
+              echo "✓ Processo está rodando"
             else
-              echo "✗ ERRO: Aplicação parou de rodar!"
+              echo "✗ Processo NÃO está rodando!"
               echo ""
-              echo "=== Logs completos ==="
+              echo "Logs:"
               cat app.log
               exit 1
             fi
             
-            # Verificar se a porta 8080 está ouvindo
             echo ""
-            echo "Verificando porta 8080..."
-            if netstat -tuln | grep :8080 > /dev/null 2>&1; then
+            echo "=== Verificando porta 8080 ==="
+            if ss -tuln | grep :8080; then
               echo "✓ Porta 8080 está aberta"
             else
-              echo "⚠ Porta 8080 ainda não está aberta (pode estar inicializando)"
+              echo "⚠ Porta 8080 ainda não abriu"
             fi
+            
+            echo ""
+            echo "=== Últimas 50 linhas do log ==="
+            tail -n 50 app.log
 
       - name: Health Check
         run: |
