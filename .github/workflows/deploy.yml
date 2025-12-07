@@ -57,6 +57,7 @@ jobs:
           script: |
             #!/bin/bash
             set -x  # Debug mode
+            set +e  # Não parar em erros
             
             echo "=== Verificando Java ==="
             if ! command -v java &> /dev/null; then
@@ -67,12 +68,16 @@ jobs:
             
             echo ""
             echo "=== Parando aplicação anterior ==="
-            pkill -9 -f "revenda.jar" || echo "Nenhum processo anterior encontrado"
+            pkill -9 -f "revenda.jar"
+            PKILL_EXIT=$?
+            echo "pkill exit code: $PKILL_EXIT"
             sleep 3
             
             echo ""
             echo "=== Liberando porta 8080 ==="
-            sudo lsof -ti:8080 | xargs sudo kill -9 2>/dev/null || echo "Porta já está livre"
+            sudo lsof -ti:8080 | xargs sudo kill -9 2>/dev/null
+            LSOF_EXIT=$?
+            echo "lsof exit code: $LSOF_EXIT"
             sleep 2
             
             echo ""
@@ -105,7 +110,7 @@ jobs:
               echo "✗ Processo NÃO está rodando!"
               echo ""
               echo "Logs:"
-              cat app.log
+              cat app.log || echo "Sem logs"
               exit 1
             fi
             
