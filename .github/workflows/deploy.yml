@@ -51,7 +51,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=yudi19_revenda-veiculos-pos-tech
-            -Dsonar.organization=yudi19
+            -Dsonar.organization=yudi19key
             -Dsonar.sources=src/main/java
             -Dsonar.tests=src/test/java
             -Dsonar.java.binaries=build/classes/java/main
