@@ -50,7 +50,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=yudi19key
+            -Dsonar.projectKey=yudi19_revenda-veiculos-pos-tech
             -Dsonar.organization=yudi19
             -Dsonar.sources=src/main/java
             -Dsonar.tests=src/test/java
