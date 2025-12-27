@@ -3,7 +3,7 @@
 [![CI/CD Pipeline](https://github.com/yudi19/revenda-veiculos-postech/actions/workflows/deploy.yml/badge.svg)](https://github.com/yudi19/revenda-veiculos-postech/actions/workflows/deploy.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=yudi19key&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=yudi19key)
 
-Sistema de gestão para revenda de veículos desenvolvido com Spring Boot, implementando Clean Architecture e seguindo princípios SOLID. O projeto possui integração completa com AWS Cognito para autenticação, deploy automatizado na AWS EC2 via GitHub Actions, e análise contínua de qualidade de código com SonarCloud.
+Sistema de gestão para revenda de veículos desenvolvido com JAVA 21, Spring Boot, implementando arquitetura hexagonal. O projeto possui integração completa com **AWS Cognito para autenticação**, deploy automatizado na AWS EC2 via GitHub Actions, e análise contínua de qualidade de código com SonarCloud.
 
 ## 📋 Sumário
 
@@ -25,8 +25,9 @@ O sistema de revenda de veículos permite gerenciar o catálogo de veículos dis
 
 ### Funcionalidades Principais
 
-- ✅ Cadastro, edição e listagem de veículos
-- ✅ Registro de vendas com autenticação AWS Cognito
+- ✅ Cadastro, edição e listagem de veículos ordenados por valor
+- ✅ Venda de veiculos para usuários cadastrados
+- ✅ Autenticação e autorização com AWS Cognito
 - ✅ Listagem de vendas ordenadas por valor
 - ✅ Persistência em banco de dados H2 (desenvolvimento) / configurável para produção
 - ✅ Autenticação e autorização com JWT
@@ -34,7 +35,7 @@ O sistema de revenda de veículos permite gerenciar o catálogo de veículos dis
 
 ## 🏗 Arquitetura
 
-O projeto segue os princípios da **Clean Architecture** (Arquitetura Hexagonal), separando responsabilidades em camadas bem definidas:
+O projeto segue os princípios da Arquitetura Hexagonal, separando responsabilidades em camadas bem definidas:
 
 ```
 src/main/java/com/example/revenda_veiculos_postech/
@@ -95,37 +96,6 @@ git clone https://github.com/yudi19/revenda-veiculos-postech.git
 cd revenda-veiculos-postech
 ```
 
-2. **Configure as variáveis de ambiente** (opcional):
-
-Crie um arquivo `application-local.properties` em `src/main/resources/`:
-
-```properties
-# Configuração do H2
-spring.h2.console.enabled=true
-spring.datasource.url=jdbc:h2:mem:testdb
-
-# AWS Cognito (substitua pelos seus valores)
-aws.cognito.region=us-east-1
-aws.cognito.userPoolId=us-east-1_XXXXXXXXX
-aws.cognito.clientId=xxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-
-3. **Execute a aplicação:**
-
-```bash
-# Usando Gradle Wrapper (recomendado)
-./gradlew bootRun
-
-# Ou usando Gradle instalado
-gradle bootRun
-```
-
-4. **Acesse a aplicação:**
-   - API: http://localhost:8080
-   - Console H2: http://localhost:8080/h2-console
-     - JDBC URL: `jdbc:h2:mem:testdb`
-     - User: `sa`
-     - Password: (deixe em branco)
 
 ### Executando com Docker
 
@@ -144,39 +114,20 @@ docker-compose up --build
 docker-compose down
 ```
 
-#### Usando Docker diretamente
+#### Collections 
+  - Collections postman esta na pasta /collections
 
-1. **Construa a imagem:**
-```bash
-docker build -t revenda-veiculos:latest .
-```
+#### Cadastro de usuário via cognito e geração de JWT
+  - Para testar o cadastro e autenticação via cognito, acesse https://us-east-10jfz467tp.auth.us-east-1.amazoncognito.com/login?client_id=4tu412kfm1dq8mt3ugeag2mhgs&response_type=code&scope=email+openid&redirect_uri=http%3A%2F%2Flocalhost%3A3000 
 
-2. **Execute o container:**
-```bash
-docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=prod \
-  revenda-veiculos:latest
-```
-
-### Build Manual
-
-Para gerar o JAR executável:
-
-```bash
-./gradlew clean build
-
-# O JAR será gerado em: build/libs/revenda-veiculos-postech-0.0.1-SNAPSHOT.jar
-
-# Execute o JAR
-java -jar build/libs/revenda-veiculos-postech-0.0.1-SNAPSHOT.jar
-```
+  - Após o cadastro e o login copiar o atributo code da url e colar no body da requisição da request /login:
+  ![alt text](image.png)
 
 ## 📚 Documentação da API
 
 ### Base URL
 ```
 Local: http://localhost:8080
-Produção: http://54.221.12.217:8080
 ```
 
 ### Autenticação
@@ -245,7 +196,7 @@ Authorization: Bearer {token}
 **Validações:**
 - `marca`: obrigatório, não pode ser vazio
 - `modelo`: obrigatório, não pode ser vazio
-- `ano`: obrigatório, deve ser >= 1886
+- `ano`: obrigatório
 - `cor`: obrigatório, não pode ser vazio
 - `preco`: obrigatório, deve ser > 0
 
@@ -472,34 +423,7 @@ curl -X POST http://localhost:8080/vendas \
 curl -X GET http://localhost:8080/vendas
 ```
 
-## 🧪 Testes
 
-### Executar Testes Unitários
-
-```bash
-./gradlew test
-```
-
-### Executar Testes com Cobertura (JaCoCo)
-
-```bash
-./gradlew test jacocoTestReport
-```
-
-O relatório de cobertura será gerado em:
-```
-build/reports/jacoco/test/html/index.html
-```
-
-### Executar Análise do SonarCloud (requer configuração)
-
-```bash
-./gradlew sonar \
-  -Dsonar.projectKey=yudi19key \
-  -Dsonar.organization=yudi19 \
-  -Dsonar.host.url=https://sonarcloud.io \
-  -Dsonar.token=SEU_SONAR_TOKEN
-```
 
 ## 🔄 CI/CD
 
@@ -547,9 +471,6 @@ Para ativar o workflow de PRs automáticos, configure um Personal Access Token:
 │  │  Port: 8080          │  │
 │  └──────────────────────┘  │
 │                             │
-│  Security Group:            │
-│  - SSH (22) - Restricted    │
-│  - HTTP (8080) - Public     │
 └─────────────────────────────┘
          ▲
          │
@@ -559,67 +480,6 @@ Para ativar o workflow de PRs automáticos, configure um Personal Access Token:
 └──────────────────┘
 ```
 
-### Provisionamento com Terraform
-
-Os arquivos de infraestrutura estão em `infra/`:
-
-```bash
-cd infra
-
-# Inicializar Terraform
-terraform init
-
-# Planejar mudanças
-terraform plan
-
-# Aplicar infraestrutura
-terraform apply
-
-# Destruir recursos (cuidado!)
-terraform destroy
-```
-
-**Recursos criados:**
-- EC2 Instance (t4g.micro)
-- Security Group (portas 22 e 8080)
-- Key Pair para acesso SSH
-
-### Variáveis de Ambiente Produção
-
-Configuradas como GitHub Secrets:
-- `AWS_ACCESS_KEY_ID` - Credencial AWS
-- `AWS_SECRET_ACCESS_KEY` - Credencial AWS
-- `EC2_SSH_KEY` - Chave privada SSH
-- `SONAR_TOKEN` - Token SonarCloud
-- `PAT_TOKEN` - Token para criar PRs (opcional)
-
-## 📝 Convenções de Código
-
-- **Nomenclatura**: camelCase para variáveis/métodos, PascalCase para classes
-- **Pacotes**: organizados por camada arquitetural
-- **DTOs**: usam sufixo `Request`/`Response`
-- **Use Cases**: verbos no infinitivo (ex: `CadastrarVeiculoUseCase`)
-- **Repositories**: sufixo `Port` para interfaces, `Adapter` para implementações
-- **Entities JPA**: sufixo `Entity`
-
-## 🤝 Contribuindo
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -m 'feat: adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
-
-### Padrão de Commits
-
-Seguimos o [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` - Nova funcionalidade
-- `fix:` - Correção de bug
-- `docs:` - Documentação
-- `refactor:` - Refatoração de código
-- `test:` - Adição/modificação de testes
-- `chore:` - Tarefas de manutenção
 
 ## 📄 Licença
 
@@ -629,12 +489,3 @@ Este projeto foi desenvolvido como trabalho acadêmico para a Pós-Tech FIAP.
 
 - **Yudi** - [@yudi19](https://github.com/yudi19)
 
-## 📞 Suporte
-
-Para dúvidas ou problemas:
-- Abra uma [issue](https://github.com/yudi19/revenda-veiculos-postech/issues)
-- Entre em contato via email
-
----
-
-⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório!
