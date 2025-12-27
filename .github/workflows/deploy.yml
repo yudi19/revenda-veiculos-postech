@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  EC2_HOST: 54.221.12.217
+  EC2_HOST: 54.175.157.12
 
 jobs:
   deploy:
@@ -71,6 +71,19 @@ jobs:
             sudo chown -R ec2-user:ec2-user /opt/revenda
             cd /opt/revenda
 
+            echo "=== Parando aplicação existente ==="
+            EXISTING_PID=$(pgrep -f "revenda.jar" || true)
+            if [ -n "$EXISTING_PID" ]; then
+              echo "Matando processo existente: $EXISTING_PID"
+              kill $EXISTING_PID || true
+              sleep 3
+              # Força se ainda estiver rodando
+              kill -9 $EXISTING_PID 2>/dev/null || true
+              echo "Processo anterior finalizado"
+            else
+              echo "Nenhum processo anterior encontrado"
+            fi
+
             echo "=== Limpando log antigo ==="
             rm -f app.log || true
 
@@ -80,7 +93,8 @@ jobs:
               echo "ERRO: /opt/revenda/revenda.jar não encontrado" && exit 1
             fi
             nohup java -jar revenda.jar --server.port=8080 > app.log 2>&1 &
-            echo "PID iniciado: $!"
+            NEW_PID=$!
+            echo "Nova aplicação iniciada com PID: $NEW_PID"
 
             echo "=== Concluído (step não falha aqui) ==="
             exit 0
