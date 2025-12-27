@@ -144,19 +144,7 @@ docker-compose up --build
 docker-compose down
 ```
 
-#### Usando Docker diretamente
 
-1. **Construa a imagem:**
-```bash
-docker build -t revenda-veiculos:latest .
-```
-
-2. **Execute o container:**
-```bash
-docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=prod \
-  revenda-veiculos:latest
-```
 
 ### Build Manual
 
@@ -245,7 +233,7 @@ Authorization: Bearer {token}
 **Validações:**
 - `marca`: obrigatório, não pode ser vazio
 - `modelo`: obrigatório, não pode ser vazio
-- `ano`: obrigatório, deve ser >= 1886
+- `ano`: obrigatório
 - `cor`: obrigatório, não pode ser vazio
 - `preco`: obrigatório, deve ser > 0
 
@@ -472,34 +460,7 @@ curl -X POST http://localhost:8080/vendas \
 curl -X GET http://localhost:8080/vendas
 ```
 
-## 🧪 Testes
 
-### Executar Testes Unitários
-
-```bash
-./gradlew test
-```
-
-### Executar Testes com Cobertura (JaCoCo)
-
-```bash
-./gradlew test jacocoTestReport
-```
-
-O relatório de cobertura será gerado em:
-```
-build/reports/jacoco/test/html/index.html
-```
-
-### Executar Análise do SonarCloud (requer configuração)
-
-```bash
-./gradlew sonar \
-  -Dsonar.projectKey=yudi19key \
-  -Dsonar.organization=yudi19 \
-  -Dsonar.host.url=https://sonarcloud.io \
-  -Dsonar.token=SEU_SONAR_TOKEN
-```
 
 ## 🔄 CI/CD
 
@@ -547,9 +508,6 @@ Para ativar o workflow de PRs automáticos, configure um Personal Access Token:
 │  │  Port: 8080          │  │
 │  └──────────────────────┘  │
 │                             │
-│  Security Group:            │
-│  - SSH (22) - Restricted    │
-│  - HTTP (8080) - Public     │
 └─────────────────────────────┘
          ▲
          │
@@ -559,67 +517,6 @@ Para ativar o workflow de PRs automáticos, configure um Personal Access Token:
 └──────────────────┘
 ```
 
-### Provisionamento com Terraform
-
-Os arquivos de infraestrutura estão em `infra/`:
-
-```bash
-cd infra
-
-# Inicializar Terraform
-terraform init
-
-# Planejar mudanças
-terraform plan
-
-# Aplicar infraestrutura
-terraform apply
-
-# Destruir recursos (cuidado!)
-terraform destroy
-```
-
-**Recursos criados:**
-- EC2 Instance (t4g.micro)
-- Security Group (portas 22 e 8080)
-- Key Pair para acesso SSH
-
-### Variáveis de Ambiente Produção
-
-Configuradas como GitHub Secrets:
-- `AWS_ACCESS_KEY_ID` - Credencial AWS
-- `AWS_SECRET_ACCESS_KEY` - Credencial AWS
-- `EC2_SSH_KEY` - Chave privada SSH
-- `SONAR_TOKEN` - Token SonarCloud
-- `PAT_TOKEN` - Token para criar PRs (opcional)
-
-## 📝 Convenções de Código
-
-- **Nomenclatura**: camelCase para variáveis/métodos, PascalCase para classes
-- **Pacotes**: organizados por camada arquitetural
-- **DTOs**: usam sufixo `Request`/`Response`
-- **Use Cases**: verbos no infinitivo (ex: `CadastrarVeiculoUseCase`)
-- **Repositories**: sufixo `Port` para interfaces, `Adapter` para implementações
-- **Entities JPA**: sufixo `Entity`
-
-## 🤝 Contribuindo
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -m 'feat: adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
-
-### Padrão de Commits
-
-Seguimos o [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` - Nova funcionalidade
-- `fix:` - Correção de bug
-- `docs:` - Documentação
-- `refactor:` - Refatoração de código
-- `test:` - Adição/modificação de testes
-- `chore:` - Tarefas de manutenção
 
 ## 📄 Licença
 
@@ -629,12 +526,3 @@ Este projeto foi desenvolvido como trabalho acadêmico para a Pós-Tech FIAP.
 
 - **Yudi** - [@yudi19](https://github.com/yudi19)
 
-## 📞 Suporte
-
-Para dúvidas ou problemas:
-- Abra uma [issue](https://github.com/yudi19/revenda-veiculos-postech/issues)
-- Entre em contato via email
-
----
-
-⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório!
