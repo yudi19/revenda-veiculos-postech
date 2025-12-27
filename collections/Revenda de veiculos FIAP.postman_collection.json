@@ -1,0 +1,207 @@
+{
+	"info": {
+		"_postman_id": "7fa5a181-9694-4156-8e7c-b66100d1fd8b",
+		"name": "Revenda de veiculos FIAP",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32642842"
+	},
+	"item": [
+		{
+			"name": "Consultar veiculos ordenado por preço",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/veiculos",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"veiculos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cadastrar veiculo",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"marca\": \"byd\",\r\n    \"modelo\": \"SEAL\",\r\n    \"ano\": 2025,\r\n    \"cor\": \"Prata\",\r\n    \"preco\": 470000\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/veiculos",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"veiculos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Editar veiculo",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"marca\": \"VW\",\r\n    \"modelo\": \"Gol\",\r\n    \"ano\": 2019,\r\n    \"cor\": \"Preto\",\r\n    \"preco\": 37000\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/veiculos/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"veiculos",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": " application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "4tu412kfm1dq8mt3ugeag2mhgs",
+							"type": "text"
+						},
+						{
+							"key": "code",
+							"value": "766b0502-d90c-4574-9882-a6a90fd25286",
+							"type": "text"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "http://localhost:3000",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://us-east-10jfz467tp.auth.us-east-1.amazoncognito.com/oauth2/token",
+					"protocol": "https",
+					"host": [
+						"us-east-10jfz467tp",
+						"auth",
+						"us-east-1",
+						"amazoncognito",
+						"com"
+					],
+					"path": [
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Comprar veiculo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiJcL3hmcWsxTE51RDRXdnpFQkw4Tnpmd241MktyaGxMUzE5V25wWW45eXNWUT0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI5NDE4YjQ2OC0yMDAxLTcwYmItNzdlYi1iM2UwYjNhM2RhOTEiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV8wSmZaNDY3VHAiLCJ2ZXJzaW9uIjoyLCJjbGllbnRfaWQiOiI0dHU0MTJrZm0xZHE4bXQzdWdlYWcybWhncyIsIm9yaWdpbl9qdGkiOiI4MzFhZWM5NC05MmY5LTQzZTgtOWE2Mi1hMDRlZjlkYzNiYTgiLCJldmVudF9pZCI6IjU0NDgxNTUwLTQ3NjItNDkwMC1hOWI4LWMxYzM0YmJlYzI3YSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIGVtYWlsIiwiYXV0aF90aW1lIjoxNzY2ODY4MTU2LCJleHAiOjE3NjY4NzE3NTYsImlhdCI6MTc2Njg2ODE1NiwianRpIjoiZWNiOTcyMDctMmE2OC00OTkzLWJhNmYtMmU2NDYyYjA5NTkwIiwidXNlcm5hbWUiOiI5NDE4YjQ2OC0yMDAxLTcwYmItNzdlYi1iM2UwYjNhM2RhOTEifQ.erwRrGsBDtnoVMO_2TBeiyGFzQhgWVwRkmdC1mI_QUyujxwA788C86HKWpfc1kE-FUdXHlOWt9qeETNoWHuETpr0IH9LTsTWhtt76d4eri_-T7Uvbr7u_yJMYEs_jINaaWhjEXQG5huwvem4qQFszFuIY01BeJ3q1mAdA4Z_6rQFK29Oyn8vkgpVUfReUMnOTzhiizFqVBdpbKJLKiy2GsXfYBn4f7_JOix9wRKrDWAFS_MyeYSAs6jEbqPCoIpA_hsZMkuSue5BkqIGWD2kmyGtEwz82P4CznNr00pcgy12uT-w9H1hbakBYLCU-vAMdzMYGT_WhR7V5xYdPbpGSg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"veiculoId\": 3\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/vendas",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"vendas"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Consultar Vendas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/vendas",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"vendas"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
