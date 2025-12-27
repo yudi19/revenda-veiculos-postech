@@ -72,18 +72,21 @@ jobs:
             cd /opt/revenda
 
             echo "=== Parando aplicação existente ==="
-            # Mata todos os processos java com revenda.jar
-            pkill -9 -f "java.*revenda.jar" || echo "Nenhum processo anterior encontrado"
+            # Mata todos os processos java com revenda.jar (ignora exit code)
+            pkill -9 -f "java.*revenda.jar" 2>/dev/null || true
+            echo "Processos antigos finalizados"
             
             # Aguarda liberação da porta 8080
             echo "Aguardando liberação da porta 8080..."
             sleep 5
             
-            # Verifica se a porta está livre
-            if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
-              echo "AVISO: Porta 8080 ainda em uso, forçando liberação..."
-              sudo kill -9 $(lsof -t -i:8080) || true
-              sleep 2
+            # Verifica se a porta está livre (se lsof existir)
+            if command -v lsof >/dev/null 2>&1; then
+              if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+                echo "AVISO: Porta 8080 ainda em uso, forçando liberação..."
+                sudo kill -9 $(lsof -t -i:8080) 2>/dev/null || true
+                sleep 2
+              fi
             fi
 
             echo "=== Limpando log antigo ==="
