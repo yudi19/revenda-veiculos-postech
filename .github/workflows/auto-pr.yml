@@ -15,49 +15,29 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check if PR already exists
-        id: check-pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BRANCH="${{ github.ref_name }}"
-          PR_EXISTS=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
-          if [ -n "$PR_EXISTS" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "PR já existe: #$PR_EXISTS"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Nenhuma PR encontrada"
-          fi
 
       - name: Create Pull Request
-        if: steps.check-pr.outputs.exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BRANCH="${{ github.ref_name }}"
-          
-          gh pr create \
-            --base main \
-            --head "$BRANCH" \
-            --title "🚀 $BRANCH → main" \
-            --body "## 🤖 Pull Request Automático
-          
-          Esta PR foi criada automaticamente a partir do push na branch \`$BRANCH\`.
-          
-          ### 📋 Informações
-          - **Branch de origem**: \`$BRANCH\`
-          - **Branch de destino**: \`main\`
-          - **Último commit**: ${{ github.sha }}
-          - **Autor**: @${{ github.actor }}
-          
-          ### ✅ Checklist
-          - [ ] Código revisado
-          - [ ] Testes passando
-          - [ ] SonarCloud validado
-          
-          Por favor, revise as mudanças antes de fazer o merge."
+        uses: repo-sync/pull-request@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          source_branch: ${{ github.ref_name }}
+          destination_branch: main
+          pr_title: "🚀 ${{ github.ref_name }} → main"
+          pr_body: |
+            ## 🤖 Pull Request Automático
+            
+            Esta PR foi criada automaticamente a partir do push na branch `${{ github.ref_name }}`.
+            
+            ### 📋 Informações
+            - **Branch de origem**: `${{ github.ref_name }}`
+            - **Branch de destino**: `main`
+            - **Último commit**: ${{ github.sha }}
+            - **Autor**: @${{ github.actor }}
+            
+            ### ✅ Checklist
+            - [ ] Código revisado
+            - [ ] Testes passando
+            - [ ] SonarCloud validado
+            
+            Por favor, revise as mudanças antes de fazer o merge.
 
