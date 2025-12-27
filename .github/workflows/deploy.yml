@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  EC2_HOST: 54.175.157.12
+  EC2_HOST: 54.221.12.217
 
 jobs:
   deploy:
