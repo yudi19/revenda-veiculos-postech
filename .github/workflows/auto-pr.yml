@@ -19,7 +19,7 @@ jobs:
       - name: Create Pull Request
         uses: repo-sync/pull-request@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.PAT_TOKEN }}
           source_branch: ${{ github.ref_name }}
           destination_branch: main
           pr_title: "🚀 ${{ github.ref_name }} → main"
