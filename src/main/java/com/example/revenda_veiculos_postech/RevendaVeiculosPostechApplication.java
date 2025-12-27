@@ -10,4 +10,5 @@ public class RevendaVeiculosPostechApplication {
 		SpringApplication.run(RevendaVeiculosPostechApplication.class, args);
 	}
 
+
 }
