@@ -8,6 +8,6 @@ public class PingController {
 
     @GetMapping("/ping")
     public String ping() {
-        return "revenda-api 2025.12.27-02";
+        return "revenda-api 2025.12.27-03";
     }
 }
