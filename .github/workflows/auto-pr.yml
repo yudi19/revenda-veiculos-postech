@@ -59,6 +59,5 @@ jobs:
           - [ ] Testes passando
           - [ ] SonarCloud validado
           
-          Por favor, revise as mudanças antes de fazer o merge." \
-            --label "auto-pr,needs-review"
+          Por favor, revise as mudanças antes de fazer o merge."
 
