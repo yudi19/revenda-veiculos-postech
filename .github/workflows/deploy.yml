@@ -57,14 +57,14 @@ jobs:
           timeout: 90s
           command_timeout: 60s
           script: |
-            # Script simples para iniciar a aplicação sem causar falhas no step
+            set -e
             set -x
 
             echo "=== Verificando/instalando Java ==="
             if ! command -v java >/dev/null 2>&1; then
-              sudo yum install -y java-21-amazon-corretto-headless || true
+              sudo yum install -y java-21-amazon-corretto-headless
             fi
-            java -version || true
+            java -version
 
             echo "=== Garantindo diretório /opt/revenda ==="
             sudo mkdir -p /opt/revenda
@@ -72,32 +72,43 @@ jobs:
             cd /opt/revenda
 
             echo "=== Parando aplicação existente ==="
-            EXISTING_PID=$(pgrep -f "revenda.jar" || true)
-            if [ -n "$EXISTING_PID" ]; then
-              echo "Matando processo existente: $EXISTING_PID"
-              kill $EXISTING_PID || true
-              sleep 3
-              # Força se ainda estiver rodando
-              kill -9 $EXISTING_PID 2>/dev/null || true
-              echo "Processo anterior finalizado"
-            else
-              echo "Nenhum processo anterior encontrado"
+            # Mata todos os processos java com revenda.jar
+            pkill -9 -f "java.*revenda.jar" || echo "Nenhum processo anterior encontrado"
+            
+            # Aguarda liberação da porta 8080
+            echo "Aguardando liberação da porta 8080..."
+            sleep 5
+            
+            # Verifica se a porta está livre
+            if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+              echo "AVISO: Porta 8080 ainda em uso, forçando liberação..."
+              sudo kill -9 $(lsof -t -i:8080) || true
+              sleep 2
             fi
 
             echo "=== Limpando log antigo ==="
-            rm -f app.log || true
+            rm -f app.log
 
             echo "=== Iniciando aplicação ==="
-            ls -lah /opt/revenda || true
+            ls -lah /opt/revenda
             if [ ! -f /opt/revenda/revenda.jar ]; then
-              echo "ERRO: /opt/revenda/revenda.jar não encontrado" && exit 1
+              echo "ERRO: /opt/revenda/revenda.jar não encontrado"
+              exit 1
             fi
+            
             nohup java -jar revenda.jar --server.port=8080 > app.log 2>&1 &
             NEW_PID=$!
             echo "Nova aplicação iniciada com PID: $NEW_PID"
-
-            echo "=== Concluído (step não falha aqui) ==="
-            exit 0
+            
+            # Aguarda alguns segundos para verificar se iniciou
+            sleep 5
+            if ps -p $NEW_PID > /dev/null 2>&1; then
+              echo "✓ Aplicação rodando com sucesso (PID: $NEW_PID)"
+            else
+              echo "✗ ERRO: Aplicação falhou ao iniciar"
+              cat app.log
+              exit 1
+            fi
 
       - name: Check Application Logs
         uses: appleboy/ssh-action@v1.0.3
